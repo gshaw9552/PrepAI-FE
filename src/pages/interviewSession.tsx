@@ -107,7 +107,7 @@ const InterviewSession: React.FC = () => {
     try {
       const prompt = `Generate 3 challenging interview questions on "${selectedTopic}" for a candidate with moderate experience. Format them as: Q1: <question1> || Q2: <question2> || Q3: <question3>`;
       
-      const response = await axios.post('/api/interview/generate', { prompt }, { 
+      const response = await axios.post('https://prepai-ww7l.onrender.com/api/interview/generate', { prompt }, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       
