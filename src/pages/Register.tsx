@@ -57,7 +57,7 @@ const Register: React.FC = () => {
     setError('');
 
     try {
-      await axios.post('https://prepai-ww7l.onrender.com/api/auth/register', {
+      await axios.post('/api/auth/register', {
         username,
         email,
         password,

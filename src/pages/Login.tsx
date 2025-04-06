@@ -48,7 +48,7 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await axios.post('https://prepai-ww7l.onrender.com/api/auth/login', {
+      const response = await axios.post('/api/auth/login', {
         identifier,
         password,
       });

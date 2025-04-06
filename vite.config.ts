@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'https://prepai-ww7l.onrender.com/'
+      '/api': 'https://prepai-ww7l.onrender.com'
     }
   }
 });
