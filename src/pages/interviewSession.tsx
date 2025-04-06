@@ -189,7 +189,7 @@ const InterviewSession: React.FC = () => {
       
       const prompt = `Based on the following details, provide overall feedback and recommendations:\n\n${combinedQA}`;
       
-      const response = await axios.post('/api/interview/evaluate', 
+      const response = await axios.post('https://prepai-ww7l.onrender.com/api/interview/evaluate', 
         { question: combinedQA, answer: prompt }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -204,7 +204,7 @@ const InterviewSession: React.FC = () => {
   const storeInterviewSession = async () => {
     try {
       await axios.post(
-        '/api/interview/store',
+        'https://prepai-ww7l.onrender.com/api/interview/store',
         { 
           topic: topic || customTopic,
           questions, 
@@ -267,7 +267,7 @@ const InterviewSession: React.FC = () => {
     // Also save to backend
     try {
       axios.post(
-        '/api/saved',
+        'https://prepai-ww7l.onrender.com/api/saved',
         { 
           question: questions[currentQuestionIndex],
           answer: answers[currentQuestionIndex] || "" 

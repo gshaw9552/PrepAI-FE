@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
     if (token) {
       setLoading(true);
       axios
-        .get('/api/analytics', { headers: { Authorization: `Bearer ${token}` } })
+        .get('https://prepai-ww7l.onrender.com/api/analytics', { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => {
           setAnalytics(res.data);
           setLoading(false);

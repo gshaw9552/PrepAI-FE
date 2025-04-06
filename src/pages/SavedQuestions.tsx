@@ -35,7 +35,7 @@ const SavedQuestions: React.FC = () => {
   const fetchSavedQuestions = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('/api/saved', { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get('https://prepai-ww7l.onrender.com/api/saved', { headers: { Authorization: `Bearer ${token}` } });
       setSaved(response.data.saved);
       setError('');
     } catch (err) {
@@ -60,7 +60,7 @@ const SavedQuestions: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.put(
-        `/api/saved/${id}`, 
+        `https://prepai-ww7l.onrender.com/api/saved/${id}`, 
         { answer: editedAnswer },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -87,7 +87,7 @@ const SavedQuestions: React.FC = () => {
     
     setIsLoading(true);
     try {
-      await axios.delete(`/api/saved/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`https://prepai-ww7l.onrender.com/api/saved/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setSaved(saved.filter(item => item._id !== id));
       setError('');
     } catch (err) {

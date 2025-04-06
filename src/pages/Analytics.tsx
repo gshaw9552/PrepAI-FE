@@ -15,7 +15,7 @@ const Analytics: React.FC = () => {
 
   useEffect(() => {
     if (token) {
-      axios.get('/api/analytics', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get('https://prepai-ww7l.onrender.com/api/analytics', { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => {
           setAnalytics(res.data);
           setInterviews(res.data.interviews || []);
