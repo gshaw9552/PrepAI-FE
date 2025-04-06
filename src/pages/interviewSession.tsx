@@ -133,7 +133,7 @@ const InterviewSession: React.FC = () => {
   };
 
   const evaluateAnswer = async (currentQ: string, candidateAnswer: string): Promise<any> => {
-    const response = await axios.post('/api/interview/evaluate', 
+    const response = await axios.post('https://prepai-ww7l.onrender.com/api/interview/evaluate', 
       { question: currentQ, answer: candidateAnswer }, 
       { headers: { Authorization: `Bearer ${token}` } }
     );
