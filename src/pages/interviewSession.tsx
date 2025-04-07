@@ -238,12 +238,20 @@ const InterviewSession: React.FC = () => {
     Promise.all([
       generateOverallFeedback(),
       storeInterviewSession()
-    ]).then(() => {
-      setCurrentQuestionIndex(QUESTION_COUNT);
-      localStorage.removeItem("interviewActive");
-    }).finally(() => {
-      setIsLoading(false);
-    });
+    ])
+      .then(() => {
+        // Instead of navigating away, simply set the state so that the overall feedback summary is displayed.
+        setCurrentQuestionIndex(QUESTION_COUNT);
+        // Remove interviewActive flag only if you want to end the interview session
+        localStorage.removeItem("interviewActive");
+      })
+      .catch((err) => {
+        console.error("Error ending interview:", err);
+        setError("Error ending interview. Please try again.");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const handleRetry = () => {
