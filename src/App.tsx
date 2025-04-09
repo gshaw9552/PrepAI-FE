@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SavedQuestions from './pages/SavedQuestions';
 import ProtectedRoute from './components/ProtectedRoute';
+import Analytics from './pages/Analytics';
 
 const App: React.FC = () => {
   return (
@@ -20,6 +21,13 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route 
+              path="/analytics" 
+              element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              } />
             <Route 
               path="/interview" 
               element={
