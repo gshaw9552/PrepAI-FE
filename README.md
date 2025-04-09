@@ -1,54 +1,78 @@
-# React + TypeScript + Vite
+# PrepAI Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PrepAI is an AI-powered interview platform that helps users prepare for job interviews with dynamic question generation, real-time feedback, and progress tracking. This repository contains the frontend code built with React, TypeScript, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Table of Contents
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Features](#features)
+- [Installation](#installation)
+- [Development](#development)
+- [Deployment](#deployment)
 
-## Expanding the ESLint configuration
+## Overview
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+PrepAI provides a seamless interview preparation experience, allowing candidates to receive dynamic interview questions, view detailed feedback, and track their progress over time. The frontend is responsible for user interactions and communication with the backend APIs.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Tech Stack
+
+- **React**: Component-based UI development.
+- **TypeScript**: Provides type safety and improved developer experience.
+- **Tailwind CSS**: Utility-first CSS framework for rapid UI development.
+- **Axios**: For making API requests to the backend.
+
+## Features
+
+- User authentication (login & registration)
+- Dynamic interview question generation
+- Real-time AI evaluation and feedback on answers
+- Interview session tracking and analytics
+- Option to save questions for later review
+
+## Installation
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/your-username/PrepAI.git
+   cd PrepAI/frontend
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+## Development
+
+To run the frontend in development mode:
+
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will typically be available at `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Build
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+To create a production build:
+
+```bash
+npm run build
 ```
+
+## Environment Variables
+
+Create a `.env` file in the `frontend` folder with the following values:
+
+```env
+VITE_BACKEND_URL=http://localhost:5000
+```
+
+## Deployment
+
+You can deploy the frontend on platforms like Vercel, Netlify, or GitHub Pages.
+
+Make sure to set the `VITE_BACKEND_URL` environment variable appropriately on the deployment platform.
