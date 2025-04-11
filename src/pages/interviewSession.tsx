@@ -1,4 +1,4 @@
-// src/pages/interviewSession.tsx
+// src/pages/interviewSession.tsx - Updated version
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +33,8 @@ const InterviewSession: React.FC = () => {
   const [savedQuestions, setSavedQuestions] = useState<Set<number>>(new Set());
   const [customTopic, setCustomTopic] = useState<string>('');
   const [progress, setProgress] = useState<number>(0);
+  const [showFinalFeedback, setShowFinalFeedback] = useState<boolean>(false);
+  const [lastQuestionFeedback, setLastQuestionFeedback] = useState<any>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const formattedTime = () => {
@@ -79,20 +81,10 @@ const InterviewSession: React.FC = () => {
   };
 
   useEffect(() => {
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => { 
+      if (timerRef.current) clearInterval(timerRef.current); 
+    };
   }, []);
-
-  // const generateQuestion = async (prompt: string): Promise<string> => {
-  //   try {
-  //     const response = await axios.post('/api/interview/generate', { prompt }, { 
-  //       headers: { Authorization: `Bearer ${token}` } 
-  //     });
-  //     return response.data.question;
-  //   } catch (err) {
-  //     console.error("Error generating questions:", err);
-  //     throw err;
-  //   }
-  // };
 
   const startInterview = async () => {
     setError('');
@@ -123,6 +115,8 @@ const InterviewSession: React.FC = () => {
       setAnswers(Array(QUESTION_COUNT).fill(''));
       setFeedbacks(Array(QUESTION_COUNT).fill({ text: '' }));
       setSavedQuestions(new Set());
+      setShowFinalFeedback(false);
+      setLastQuestionFeedback(null);
       startTimer();
     } catch (err) {
       console.error("Error generating questions:", err);
@@ -151,16 +145,20 @@ const InterviewSession: React.FC = () => {
     setIsLoading(true);
     try {
       const fb = await evaluateAnswer(questions[currentQuestionIndex], candidateAnswer);
+      
+      // Update feedbacks array
       setFeedbacks(prev => {
         const newFb = [...prev];
         newFb[currentQuestionIndex] = fb;
         return newFb;
       });
-      
-      if (currentQuestionIndex < QUESTION_COUNT - 1) {
-        setCurrentQuestionIndex(prev => prev + 1);
-        startTimer();
-      } else {
+
+      // Check if this is the last question
+      if (currentQuestionIndex === QUESTION_COUNT - 1) {
+        // Save the last question's feedback to show it
+        setLastQuestionFeedback(fb);
+        
+        // Check for unanswered questions
         if (answers.some(ans => ans.trim() === "")) {
           if (!window.confirm("Some questions are unanswered. End interview anyway?")) {
             startTimer();
@@ -168,10 +166,18 @@ const InterviewSession: React.FC = () => {
             return;
           }
         }
+        
+        // Generate overall feedback and store the session
         await generateOverallFeedback();
         await storeInterviewSession();
-        setCurrentQuestionIndex(QUESTION_COUNT);
+        
+        // Set flag to show final feedback
+        setShowFinalFeedback(true);
         localStorage.removeItem("interviewActive");
+      } else {
+        // Move to next question if not the last one
+        setCurrentQuestionIndex(prev => prev + 1);
+        startTimer();
       }
     } catch (err) {
       console.error("Error evaluating answer:", err);
@@ -240,9 +246,9 @@ const InterviewSession: React.FC = () => {
       storeInterviewSession()
     ])
       .then(() => {
-        // Instead of navigating away, simply set the state so that the overall feedback summary is displayed.
-        setCurrentQuestionIndex(QUESTION_COUNT);
-        // Remove interviewActive flag only if you want to end the interview session
+        // Set flag to show final feedback
+        setShowFinalFeedback(true);
+        // Remove interviewActive flag
         localStorage.removeItem("interviewActive");
       })
       .catch((err) => {
@@ -264,6 +270,8 @@ const InterviewSession: React.FC = () => {
     setOverallFeedback('');
     setError('');
     setSavedQuestions(new Set());
+    setShowFinalFeedback(false);
+    setLastQuestionFeedback(null);
     
     if (timerRef.current) clearInterval(timerRef.current);
     localStorage.removeItem("interviewActive");
@@ -296,7 +304,7 @@ const InterviewSession: React.FC = () => {
             Interview Session for <span className="text-blue-600">{username}</span>
           </h1>
           
-          {currentQuestionIndex !== -1 && currentQuestionIndex < QUESTION_COUNT && (
+          {currentQuestionIndex !== -1 && currentQuestionIndex < QUESTION_COUNT && !showFinalFeedback && (
             <div className="flex items-center text-gray-600">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -378,7 +386,7 @@ const InterviewSession: React.FC = () => {
           </div>
         )}
         
-        {currentQuestionIndex !== -1 && currentQuestionIndex < QUESTION_COUNT && (
+        {currentQuestionIndex !== -1 && currentQuestionIndex < QUESTION_COUNT && !showFinalFeedback && (
           <div className="mb-6">
             <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
               <div 
@@ -476,7 +484,8 @@ const InterviewSession: React.FC = () => {
           </div>
         )}
         
-        {feedbacks[currentQuestionIndex]?.text && currentQuestionIndex < QUESTION_COUNT && (
+        {/* Show feedback for current question - only if not showing final feedback */}
+        {feedbacks[currentQuestionIndex]?.text && currentQuestionIndex < QUESTION_COUNT && !showFinalFeedback && (
           <div className="mt-6 p-6 bg-green-50 border border-green-100 rounded-lg">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-lg font-semibold text-gray-800">Feedback on Question {currentQuestionIndex + 1}</h3>
@@ -490,7 +499,23 @@ const InterviewSession: React.FC = () => {
           </div>
         )}
         
-        {currentQuestionIndex === QUESTION_COUNT && (
+        {/* Show feedback for last question when at final screen */}
+        {lastQuestionFeedback?.text && showFinalFeedback && (
+          <div className="mt-6 p-6 bg-green-50 border border-green-100 rounded-lg mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-800">Feedback on Question {QUESTION_COUNT}</h3>
+              {lastQuestionFeedback.score !== undefined && (
+                <span className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded-full">
+                  Score: {lastQuestionFeedback.score}/10
+                </span>
+              )}
+            </div>
+            <p className="text-gray-700 whitespace-pre-line">{lastQuestionFeedback.text}</p>
+          </div>
+        )}
+        
+        {/* Final feedback / Summary view */}
+        {showFinalFeedback && (
           <div className="mt-6 p-6 bg-blue-50 border border-blue-100 rounded-lg">
             <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Interview Complete</h2>
             
