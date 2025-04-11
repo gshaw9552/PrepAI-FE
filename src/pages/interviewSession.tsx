@@ -25,6 +25,7 @@ const InterviewSession: React.FC = () => {
   const [questions, setQuestions] = useState<string[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1);
   const [answers, setAnswers] = useState<string[]>([]);
+  // CHANGE 1: Initialize feedbacks properly with individual objects
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [overallFeedback, setOverallFeedback] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -82,18 +83,6 @@ const InterviewSession: React.FC = () => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
-  // const generateQuestion = async (prompt: string): Promise<string> => {
-  //   try {
-  //     const response = await axios.post('/api/interview/generate', { prompt }, { 
-  //       headers: { Authorization: `Bearer ${token}` } 
-  //     });
-  //     return response.data.question;
-  //   } catch (err) {
-  //     console.error("Error generating questions:", err);
-  //     throw err;
-  //   }
-  // };
-
   const startInterview = async () => {
     setError('');
     const selectedTopic = topic || customTopic;
@@ -121,7 +110,8 @@ const InterviewSession: React.FC = () => {
       setQuestions(qs);
       setCurrentQuestionIndex(0);
       setAnswers(Array(QUESTION_COUNT).fill(''));
-      setFeedbacks(Array(QUESTION_COUNT).fill({ text: '' }));
+      // CHANGE 2: Create a new object for each element in the array
+      setFeedbacks(Array(QUESTION_COUNT).fill(null).map(() => ({ text: '', score: null })));
       setSavedQuestions(new Set());
       startTimer();
     } catch (err) {
@@ -151,9 +141,17 @@ const InterviewSession: React.FC = () => {
     setIsLoading(true);
     try {
       const fb = await evaluateAnswer(questions[currentQuestionIndex], candidateAnswer);
+      // CHANGE 3: Log the feedback and properly format it
+      console.log("Feedback received from API:", fb);
+      
+      // CHANGE 4: Handle different feedback formats
       setFeedbacks(prev => {
         const newFb = [...prev];
-        newFb[currentQuestionIndex] = fb;
+        // Ensure fb has the expected structure
+        newFb[currentQuestionIndex] = {
+          text: typeof fb === 'string' ? fb : (fb.text || fb.feedback || fb.toString() || ''),
+          score: fb.score !== undefined ? fb.score : null
+        };
         return newFb;
       });
       
@@ -168,10 +166,19 @@ const InterviewSession: React.FC = () => {
             return;
           }
         }
-        await generateOverallFeedback();
-        await storeInterviewSession();
-        setCurrentQuestionIndex(QUESTION_COUNT);
-        localStorage.removeItem("interviewActive");
+        
+        // CHANGE 5: Wrap completion logic in try/catch to ensure state gets updated
+        try {
+          await generateOverallFeedback();
+          await storeInterviewSession();
+        } catch (err) {
+          console.error("Error completing interview:", err);
+          setError("Error completing interview. Some data may be missing.");
+        } finally {
+          // Make sure this runs even if previous async calls fail
+          setCurrentQuestionIndex(QUESTION_COUNT);
+          localStorage.removeItem("interviewActive");
+        }
       }
     } catch (err) {
       console.error("Error evaluating answer:", err);
@@ -184,7 +191,9 @@ const InterviewSession: React.FC = () => {
   const generateOverallFeedback = async () => {
     try {
       const combinedQA = questions.map((q, i) =>
-        `Q${i+1}: ${q}\nA${i+1}: ${answers[i] || "(no answer)"}\nFeedback: ${feedbacks[i]?.text || ""}`
+        `Q${i+1}: ${q}\nA${i+1}: ${answers[i] || "(no answer)"}\nFeedback: ${
+          typeof feedbacks[i]?.text === 'string' ? feedbacks[i]?.text : ''
+        }`
       ).join("\n\n");
       
       const prompt = `Based on the following details, provide overall feedback and recommendations:\n\n${combinedQA}`;
@@ -194,7 +203,11 @@ const InterviewSession: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      setOverallFeedback(response.data.feedback);
+      // CHANGE 6: Handle different response formats for overall feedback
+      const feedback = response.data.feedback;
+      setOverallFeedback(typeof feedback === 'string' ? feedback : 
+                         (feedback?.text || feedback?.feedback || 
+                          JSON.stringify(feedback) || "Could not generate overall feedback."));
     } catch (err) {
       console.error("Error generating overall feedback:", err);
       setOverallFeedback("Could not generate overall feedback.");
@@ -203,13 +216,19 @@ const InterviewSession: React.FC = () => {
 
   const storeInterviewSession = async () => {
     try {
+      // CHANGE 7: Format feedbacks properly before sending to API
+      const formattedFeedbacks = feedbacks.map(fb => ({
+        text: fb?.text || '',
+        score: fb?.score || null
+      }));
+      
       await axios.post(
         'https://prepai-ww7l.onrender.com/api/interview/store',
         { 
           topic: topic || customTopic,
           questions, 
           answers, 
-          feedbacks, 
+          feedbacks: formattedFeedbacks, 
           overallFeedback 
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -235,9 +254,15 @@ const InterviewSession: React.FC = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     
     setIsLoading(true);
+    // CHANGE 8: Improve end interview logic
     Promise.all([
-      generateOverallFeedback(),
-      storeInterviewSession()
+      generateOverallFeedback().catch(err => {
+        console.error("Error generating overall feedback:", err);
+        return "Could not generate overall feedback.";
+      }),
+      storeInterviewSession().catch(err => {
+        console.error("Error storing interview session:", err);
+      })
     ])
       .then(() => {
         // Instead of navigating away, simply set the state so that the overall feedback summary is displayed.
@@ -286,6 +311,14 @@ const InterviewSession: React.FC = () => {
       console.error("Error saving question:", err);
       // We keep it in the local set anyway
     }
+  };
+
+  // CHANGE 9: Helper function to safely render feedback text
+  const renderFeedbackText = (index: number) => {
+    const feedback = feedbacks[index];
+    if (!feedback) return '';
+    return typeof feedback.text === 'string' ? feedback.text : 
+           (typeof feedback === 'string' ? feedback : '');
   };
 
   return (
@@ -476,17 +509,18 @@ const InterviewSession: React.FC = () => {
           </div>
         )}
         
+        {/* CHANGE 10: Use safer rendering for feedback */}
         {feedbacks[currentQuestionIndex]?.text && currentQuestionIndex < QUESTION_COUNT && (
           <div className="mt-6 p-6 bg-green-50 border border-green-100 rounded-lg">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-lg font-semibold text-gray-800">Feedback on Question {currentQuestionIndex + 1}</h3>
-              {feedbacks[currentQuestionIndex].score !== undefined && (
+              {feedbacks[currentQuestionIndex]?.score !== undefined && (
                 <span className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded-full">
-                  Score: {feedbacks[currentQuestionIndex].score}/10
+                  Score: {feedbacks[currentQuestionIndex]?.score}/10
                 </span>
               )}
             </div>
-            <p className="text-gray-700 whitespace-pre-line">{feedbacks[currentQuestionIndex].text}</p>
+            <p className="text-gray-700 whitespace-pre-line">{renderFeedbackText(currentQuestionIndex)}</p>
           </div>
         )}
         
@@ -517,7 +551,7 @@ const InterviewSession: React.FC = () => {
                   {feedbacks[i]?.text && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Feedback:</span> {feedbacks[i].text}
+                        <span className="font-medium">Feedback:</span> {renderFeedbackText(i)}
                       </p>
                     </div>
                   )}
